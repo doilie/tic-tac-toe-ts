@@ -61,16 +61,7 @@ const slice = createSlice({
       if (state.gameStatus.squares[squarePos] === null && !state.gameStatus.gameOver) {
         const squares = state.gameStatus.squares.slice();
         squares[squarePos] = getNextPlayer(state.gameStatus.xIsNext);
-
-        const winnerResult = checkWinner(squares);
-        const gameOver = winnerResult !== null || checkDraw(squares);
-
-        let winner = null;
-        let winningPos: number[] = [];
-        if (winnerResult !== null) {
-          winner = winnerResult.winner;
-          winningPos = winnerResult.winningPos;
-        }
+        const { gameOver, winner, winningPos } = getGameResult(squares);
 
         const turns = state.turnStatus.turns.slice(0, state.turnStatus.turnNumber + 1).concat([{
           squares,
@@ -97,12 +88,17 @@ const slice = createSlice({
     setTurn: (state: GameSliceState, action: PayloadAction<number>) => {
       const turnNumber = action.payload;
       const turns = state.turnStatus.turns;
+
       const squares = turns[turnNumber].squares;
+      const { gameOver, winner, winningPos } = getGameResult(squares);
+
       return {
         gameStatus: {
-          ...state.gameStatus,
           squares,
           xIsNext: (turnNumber % 2) === 0,
+          gameOver,
+          winner,
+          winningPos,
         },
         turnStatus: {
           ...state.turnStatus,
@@ -125,6 +121,20 @@ const slice = createSlice({
 
   },
 });
+
+const getGameResult = (squares: string[]) => {
+  const winnerResult = checkWinner(squares);
+  const gameOver = winnerResult !== null || checkDraw(squares);
+
+  let winner = null;
+  let winningPos: number[] = [];
+  if (winnerResult !== null) {
+    winner = winnerResult.winner;
+    winningPos = winnerResult.winningPos;
+  }
+
+  return { gameOver, winner, winningPos };
+};
 
 export const { addTurn, setTurn, toggleTurnsSort } = slice.actions;
 
